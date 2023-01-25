@@ -37,7 +37,6 @@ pub mod bonking {
         let (vault_authority, _bump) = Pubkey::find_program_address(
             &[
                 b"wallet",
-                ctx.accounts.mint.to_account_info().key.as_ref(),
                 ctx.accounts.bonking.to_account_info().key.as_ref(),
             ],
             ctx.program_id,
@@ -171,14 +170,12 @@ pub mod bonking {
         let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(
             &[
                 b"wallet",
-                ctx.accounts.mint.to_account_info().key.as_ref(),
                 bonking.to_account_info().key.as_ref(),
             ],
             ctx.program_id,
         );
         let authority_seeds = &[
             b"wallet",
-            ctx.accounts.mint.to_account_info().key.as_ref(),
             bonking.to_account_info().key.as_ref(),
             &[vault_authority_bump],
         ];
@@ -210,14 +207,12 @@ pub mod bonking {
         let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(
             &[
                 b"wallet",
-                ctx.accounts.escrow_wallet.mint.as_ref(),
                 ctx.accounts.bonking.to_account_info().key.as_ref(),
             ],
             ctx.program_id,
         );
         let authority_seeds = &[
             b"wallet",
-            ctx.accounts.escrow_wallet.mint.as_ref(),
             ctx.accounts.bonking.to_account_info().key.as_ref(),
             &[vault_authority_bump],
         ];
@@ -313,15 +308,18 @@ pub struct Initialize<'info> {
         payer = payer,
         seeds = [
             b"wallet".as_ref(),
-            mint.key().as_ref(),
             bonking.key().as_ref(),
         ],
         bump,
-        token::mint = mint,
+        token::mint = prize_mint,
         token::authority = payer,
     )]
     escrow_wallet: Account<'info, TokenAccount>,
-    mint: Account<'info, Mint>, // USDC
+
+    /// ticket coin
+    mint: Account<'info, Mint>,
+
+    prize_mint: Account<'info, Mint>,
 
     #[account(mut)]
     payer: Signer<'info>,

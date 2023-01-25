@@ -32,7 +32,6 @@ describe("bonking", () => {
         const [escrowWallet] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
-                mint.toBuffer(),
                 bonking.toBuffer(),
             ],
             program.programId
@@ -41,7 +40,7 @@ describe("bonking", () => {
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000));
         const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name2", new anchor.BN(0), PublicKey.default)
             .accounts({
-                bonking, escrowWallet, mint
+                bonking, escrowWallet, mint, prizeMint: mint,
             }).rpc();
         console.log("Your transaction signature", tx);
 
@@ -113,7 +112,6 @@ describe("bonking", () => {
         const [escrowWallet] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
-                mint.toBuffer(),
                 bonking.toBuffer(),
             ],
             program.programId
@@ -122,7 +120,7 @@ describe("bonking", () => {
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
         const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(0), PublicKey.default)
             .accounts({
-                bonking, escrowWallet, mint
+                bonking, escrowWallet, mint, prizeMint: mint,
             }).rpc();
         console.log("Your transaction signature", tx);
 
@@ -197,7 +195,6 @@ describe("bonking", () => {
         const [escrowWallet] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
-                mint.toBuffer(),
                 bonking.toBuffer(),
             ],
             program.programId
@@ -206,7 +203,7 @@ describe("bonking", () => {
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
         const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint)
             .accounts({
-                bonking, escrowWallet, mint
+                bonking, escrowWallet, mint, prizeMint: mint,
             }).rpc();
         console.log("Your transaction signature", tx);
 

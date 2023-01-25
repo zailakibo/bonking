@@ -18,6 +18,14 @@
         {
           "name": "mint",
           "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "ticket coin"
+          ]
+        },
+        {
+          "name": "prizeMint",
+          "isMut": false,
           "isSigner": false
         },
         {

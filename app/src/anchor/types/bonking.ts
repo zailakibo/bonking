@@ -18,6 +18,14 @@ export type Bonking = {
         {
           "name": "mint",
           "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "ticket coin"
+          ]
+        },
+        {
+          "name": "prizeMint",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -344,6 +352,14 @@ export const IDL: Bonking = {
         },
         {
           "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "ticket coin"
+          ]
+        },
+        {
+          "name": "prizeMint",
           "isMut": false,
           "isSigner": false
         },

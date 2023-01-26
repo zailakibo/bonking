@@ -4,6 +4,12 @@ use std::mem::size_of;
 
 declare_id!("Gx2UZFaDLEw3XQZdrdrTEEGfEBP9itEHuE4xpdGFJDUJ");
 
+/// b"bonking" hash
+static BONKING: [u8; 32] = [
+    109, 146, 230, 240, 219, 18, 236, 38, 126, 73, 146, 5, 30, 240, 125, 127, 19, 146, 238, 226,
+    45, 61, 159, 250, 130, 77, 124, 53, 210, 237, 120, 65,
+];
+
 #[program]
 pub mod bonking {
     use anchor_spl::token::CloseAccount;
@@ -91,7 +97,11 @@ pub mod bonking {
             to: ctx.accounts.to_account.to_account_info(),
             authority: ctx.accounts.payer.to_account_info(),
         };
-        msg!("transfer from {:?}; to {:?}", ctx.accounts.from_account.key(), ctx.accounts.to_account.key());
+        msg!(
+            "transfer from {:?}; to {:?}",
+            ctx.accounts.from_account.key(),
+            ctx.accounts.to_account.key()
+        );
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         anchor_spl::token::transfer(cpi_ctx, ctx.accounts.bonking.amount)?;
@@ -168,10 +178,7 @@ pub mod bonking {
         }
 
         let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(
-            &[
-                b"wallet",
-                bonking.to_account_info().key.as_ref(),
-            ],
+            &[b"wallet", bonking.to_account_info().key.as_ref()],
             ctx.program_id,
         );
         let authority_seeds = &[
@@ -297,8 +304,7 @@ pub struct Withdraw<'info> {
 #[instruction(hash: [u8; 32], bonk_timeout: i64, slug: String)]
 pub struct Initialize<'info> {
     #[account(init, payer = payer, seeds = [
-        b"bonking", 
-        payer.key().as_ref(),
+        &BONKING,
         &anchor_lang::solana_program::keccak::hash(&slug.as_bytes()).to_bytes(),
     ], bump, space = 8 + size_of::<Bonking>())]
     bonking: Account<'info, Bonking>,

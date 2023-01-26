@@ -6,6 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { createAssociatedTokenAccount, createMint, getAccount, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
+import { BonkingService } from "../app/src/services/BonkingService";
 
 describe("bonking", () => {
     // Configure the client to use the local cluster.
@@ -17,14 +18,7 @@ describe("bonking", () => {
     it("is a success!", async () => {
         const hashSource = "hash source x";
         const hash1 = keccak_256(hashSource);
-        const [bonking] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("bonking"),
-                program.provider.publicKey?.toBuffer(),
-                Buffer.from(keccak_256("name2")),
-            ],
-            program.programId
-        );
+        const bonkingAddress = BonkingService.findBonkingAddress("name2")
         const provider = program.provider as anchor.AnchorProvider;
         const wallet = provider.wallet as NodeWallet;
         const mint = await createMint(connection, wallet.payer, provider.publicKey, provider.publicKey, 9);
@@ -32,7 +26,7 @@ describe("bonking", () => {
         const [escrowWallet] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
-                bonking.toBuffer(),
+                bonkingAddress.toBuffer(),
             ],
             program.programId
         );
@@ -40,7 +34,7 @@ describe("bonking", () => {
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000));
         const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name2", new anchor.BN(0), PublicKey.default)
             .accounts({
-                bonking, escrowWallet, mint, prizeMint: mint,
+                bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
             }).rpc();
         console.log("Your transaction signature", tx);
 
@@ -52,59 +46,52 @@ describe("bonking", () => {
         // put the value on escrow
         await mintTo(connection, wallet.payer, mint, escrowWallet, wallet.payer, 5_000_000_000);
 
-        const bonkingObj = await program.account.bonking.fetch(bonking);
+        const bonkingObj = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj.hash1).to.be.eql(Array.from(hash1));
 
-        await bonk(program, bonking);
-        await bonk(program, bonking);
-        await bonk(program, bonking);
+        await bonk(program, bonkingAddress);
+        await bonk(program, bonkingAddress);
+        await bonk(program, bonkingAddress);
 
-        const bonkingObj2 = await program.account.bonking.fetch(bonking);
+        const bonkingObj2 = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj2.count).to.be.eq(3);
 
         // finalize the operation
         await program.methods.finalize(hashSource)
             .accounts({
-                bonking
+                bonking: bonkingAddress
             }).rpc();
 
-        const bonkingObj3 = await program.account.bonking.fetch(bonking);
+        const bonkingObj3 = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj3.winner).to.be.within(0, 2);
 
-        const notWinnerBonk = bonkPDA(program, bonking, (bonkingObj3.winner + 1) % bonkingObj3.count);
+        const notWinnerBonk = bonkPDA(program, bonkingAddress, (bonkingObj3.winner + 1) % bonkingObj3.count);
         const error = await program.methods.withdraw().accounts({
-            bonking, winnerBonk: notWinnerBonk, escrowWallet, mint,
+            bonking: bonkingAddress, winnerBonk: notWinnerBonk, escrowWallet, mint,
         }).rpc().catch(e => e)
         expect(error).to.be.instanceOf(Error)
 
         const toAccount = await createAssociatedTokenAccount(connection, wallet.payer, mint, wallet.publicKey)
 
-        const winnerBonk = bonkPDA(program, bonking, bonkingObj3.winner);
+        const winnerBonk = bonkPDA(program, bonkingAddress, bonkingObj3.winner);
         await program.methods.withdraw().accounts({
-            bonking, winnerBonk, escrowWallet, mint, to: toAccount
+            bonking: bonkingAddress, winnerBonk, escrowWallet, mint, to: toAccount
         }).rpc()
 
         await program.methods.closeBonking().accounts({
-            bonking,
+            bonking: bonkingAddress,
             escrowWallet,
         }).rpc()
 
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 0, wallet.payer);
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 1, wallet.payer);
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 2, wallet.payer);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 0, wallet.payer);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 1, wallet.payer);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 2, wallet.payer);
     });
 
     it("is a success! Timeout", async () => {
         const hashSource = "hash source x";
         const hash1 = keccak_256(hashSource);
-        const [bonking] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("bonking"),
-                program.provider.publicKey?.toBuffer(),
-                Buffer.from(keccak_256("name")),
-            ],
-            program.programId
-        );
+        const bonkingAddress = BonkingService.findBonkingAddress("name")
         const provider = program.provider as anchor.AnchorProvider;
         const wallet = provider.wallet as NodeWallet;
         const mint = await createMint(connection, wallet.payer, provider.publicKey, provider.publicKey, 9);
@@ -112,7 +99,7 @@ describe("bonking", () => {
         const [escrowWallet] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
-                bonking.toBuffer(),
+                bonkingAddress.toBuffer(),
             ],
             program.programId
         );
@@ -120,7 +107,7 @@ describe("bonking", () => {
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
         const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(0), PublicKey.default)
             .accounts({
-                bonking, escrowWallet, mint, prizeMint: mint,
+                bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
             }).rpc();
         console.log("Your transaction signature", tx);
 
@@ -132,60 +119,53 @@ describe("bonking", () => {
         // put the value on escrow
         await mintTo(connection, wallet.payer, mint, escrowWallet, wallet.payer, 5_000_000_000);
 
-        const bonkingObj = await program.account.bonking.fetch(bonking);
+        const bonkingObj = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj.hash1).to.be.eql(Array.from(hash1));
 
         console.log('bonking...');
-        await bonk(program, bonking);
-        await bonk(program, bonking);
-        await bonk(program, bonking);
+        await bonk(program, bonkingAddress);
+        await bonk(program, bonkingAddress);
+        await bonk(program, bonkingAddress);
 
-        const bonkingObj2 = await program.account.bonking.fetch(bonking);
+        const bonkingObj2 = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj2.count).to.be.eq(3);
 
         // finalize the operation
         await program.methods.finalizeByTimeout()
             .accounts({
-                bonking
+                bonking: bonkingAddress
             }).rpc();
 
-        const bonkingObj3 = await program.account.bonking.fetch(bonking);
+        const bonkingObj3 = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj3.winner).to.be.within(0, 2);
 
-        const notWinnerBonk = bonkPDA(program, bonking, (bonkingObj3.winner + 1) % bonkingObj3.count);
+        const notWinnerBonk = bonkPDA(program, bonkingAddress, (bonkingObj3.winner + 1) % bonkingObj3.count);
         const error = await program.methods.withdraw().accounts({
-            bonking, winnerBonk: notWinnerBonk, escrowWallet, mint,
+            bonking: bonkingAddress, winnerBonk: notWinnerBonk, escrowWallet, mint,
         }).rpc().catch(e => e)
         expect(error).to.be.instanceOf(Error)
 
         const toAccount = await createAssociatedTokenAccount(connection, wallet.payer, mint, wallet.publicKey)
 
-        const winnerBonk = bonkPDA(program, bonking, bonkingObj3.winner);
+        const winnerBonk = bonkPDA(program, bonkingAddress, bonkingObj3.winner);
         await program.methods.withdraw().accounts({
-            bonking, winnerBonk, escrowWallet, mint, to: toAccount
+            bonking: bonkingAddress, winnerBonk, escrowWallet, mint, to: toAccount
         }).rpc()
 
         await program.methods.closeBonking().accounts({
-            bonking,
+            bonking: bonkingAddress,
             escrowWallet,
         }).rpc()
 
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 0, wallet.payer);
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 1, wallet.payer);
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 2, wallet.payer);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 0, wallet.payer);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 1, wallet.payer);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 2, wallet.payer);
     });
 
     it("is a success! Payed", async () => {
         const hashSource = "hash source x";
         const hash1 = keccak_256(hashSource);
-        const [bonking] = PublicKey.findProgramAddressSync(
-            [
-                Buffer.from("bonking"),
-                program.provider.publicKey?.toBuffer(),
-                Buffer.from(keccak_256("name")),
-            ],
-            program.programId
-        );
+        const bonkingAddress = BonkingService.findBonkingAddress("name")
         const provider = program.provider as anchor.AnchorProvider;
         const wallet = provider.wallet as NodeWallet;
         const mint = await createMint(connection, wallet.payer, provider.publicKey, provider.publicKey, 9);
@@ -195,7 +175,7 @@ describe("bonking", () => {
         const [escrowWallet] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
-                bonking.toBuffer(),
+                bonkingAddress.toBuffer(),
             ],
             program.programId
         );
@@ -203,7 +183,7 @@ describe("bonking", () => {
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
         const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint)
             .accounts({
-                bonking, escrowWallet, mint, prizeMint: mint,
+                bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
             }).rpc();
         console.log("Your transaction signature", tx);
 
@@ -229,41 +209,41 @@ describe("bonking", () => {
         console.log('mint...')
         await mintTo(connection, wallet.payer, payWithMint, endUserAccount.address, wallet.payer, 30);
 
-        const bonkingObj = await program.account.bonking.fetch(bonking);
+        const bonkingObj = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj.hash1).to.be.eql(Array.from(hash1));
 
         console.log('bonking...');
-        await payedBonk(program, bonking, payWithMint, endUserAccount.address, endUserWallet);
-        await payedBonk(program, bonking, payWithMint, endUserAccount.address, endUserWallet);
-        await payedBonk(program, bonking, payWithMint, endUserAccount.address, endUserWallet);
+        await payedBonk(program, bonkingAddress, payWithMint, endUserAccount.address, endUserWallet);
+        await payedBonk(program, bonkingAddress, payWithMint, endUserAccount.address, endUserWallet);
+        await payedBonk(program, bonkingAddress, payWithMint, endUserAccount.address, endUserWallet);
 
-        const bonkingObj2 = await program.account.bonking.fetch(bonking);
+        const bonkingObj2 = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj2.count).to.be.eq(3);
 
         // finalize the operation
         console.log('finalizing...')
         await program.methods.finalizeByTimeout()
             .accounts({
-                bonking
+                bonking: bonkingAddress
             }).rpc();
 
-        const bonkingObj3 = await program.account.bonking.fetch(bonking);
+        const bonkingObj3 = await program.account.bonking.fetch(bonkingAddress);
         expect(bonkingObj3.winner).to.be.within(0, 2);
 
-        const notWinnerBonk = bonkPDA(program, bonking, (bonkingObj3.winner + 1) % bonkingObj3.count);
+        const notWinnerBonk = bonkPDA(program, bonkingAddress, (bonkingObj3.winner + 1) % bonkingObj3.count);
 
         console.log('withdraw error...')
         const error = await program.methods.withdraw().accounts({
-            bonking, winnerBonk: notWinnerBonk, escrowWallet, mint,
+            bonking: bonkingAddress, winnerBonk: notWinnerBonk, escrowWallet, mint,
         }).rpc().catch(e => e)
         expect(error).to.be.instanceOf(Error)
 
         const toAccount = await createAssociatedTokenAccount(connection, wallet.payer, mint, endUserWallet.publicKey)
 
-        const winnerBonk = bonkPDA(program, bonking, bonkingObj3.winner);
+        const winnerBonk = bonkPDA(program, bonkingAddress, bonkingObj3.winner);
         console.log('withdraw success...')
         await program.methods.withdraw().accounts({
-            bonking, winnerBonk, escrowWallet, mint, to: toAccount,
+            bonking: bonkingAddress, winnerBonk, escrowWallet, mint, to: toAccount,
             payer: endUserWallet.publicKey
         })
             .signers([endUserWallet])
@@ -271,14 +251,14 @@ describe("bonking", () => {
 
         console.log('close bonking...')
         await program.methods.closeBonking().accounts({
-            bonking,
+            bonking: bonkingAddress,
             escrowWallet,
         }).rpc()
 
         console.log('close bonks...')
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 0, endUserWallet);
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 1, endUserWallet);
-        await closeBonkNotWinner(program, bonking, bonkingObj3.winner, 2, endUserWallet);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 0, endUserWallet);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 1, endUserWallet);
+        await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 2, endUserWallet);
 
         const endUserAccountFinal = await getOrCreateAssociatedTokenAccount(program.provider.connection, wallet.payer, mint, endUserWallet.publicKey);
         const expected = 5_000_000_000;

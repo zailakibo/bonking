@@ -5,4 +5,6 @@ export interface BonkingModel {
     amount: number,
     mint: PublicKey,
     prizeMint: PublicKey,
+    slug: string,
+    hashSource: string,
 }

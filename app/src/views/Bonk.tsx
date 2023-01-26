@@ -28,11 +28,20 @@ export function Bonk() {
     }
 
     async function doBonk() {
-        await BonkService.bonk({
-            connection: connection.connection,
-            wallet,
-            bonkingAddress: bonking.key
-        })
+        if (bonking.amount.toNumber() > 0) {
+            await BonkService.payToBonk({
+                connection: connection.connection,
+                wallet,
+                bonkingAddress: bonking.key
+            })
+        } else {
+            await BonkService.bonk({
+                connection: connection.connection,
+                wallet,
+                bonkingAddress: bonking.key
+            })
+        }
+        loadBonking()
         alert("Ok")
     }
 

@@ -3,6 +3,7 @@ import { keccak_256 } from "@noble/hashes/sha3";
 import { ProgramService } from './ProgramService';
 import * as anchor from "@project-serum/anchor";
 import { BonkingModel } from '../models/BonkingModel';
+import { getAccount, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 
 const BONKING = Buffer.from(keccak_256("bonking"));
 
@@ -16,6 +17,13 @@ type FindBonkingBySlugArgs = {
     connection: Connection
     wallet: any
     slug: string
+}
+
+type WithdrawArgs = {
+    connection: Connection
+    wallet: any
+    slug: string
+    winnerBonk: PublicKey
 }
 
 export class BonkingService {
@@ -81,5 +89,19 @@ export class BonkingService {
             .accounts({
                 bonking: bonkingAddress
             }).rpc();
+    }
+
+    static async withdraw({ connection, wallet, slug, winnerBonk }: WithdrawArgs) {
+        const program = ProgramService.getProgram(connection, wallet);
+        const bonkingAddress = BonkingService.findBonkingAddress(slug);
+        const escrowWallet = BonkingService.findEscrowAddress(bonkingAddress);
+        const escrowObj = await getAccount(connection, escrowWallet);
+        const toAccount = await getOrCreateAssociatedTokenAccount(connection, wallet, escrowObj.mint, wallet.publicKey)
+        await program.methods.withdraw().accounts({
+            bonking: bonkingAddress, winnerBonk, escrowWallet,
+            mint: escrowObj.mint, to: toAccount.address,
+        })
+            .rpc()
+
     }
 }

@@ -7,6 +7,8 @@ import { BonkService } from "../services/BonkService"
 export function Bonk() {
     const [bonking, setBonking] = useState<any>()
     const [showFinalizeByTimeout, setShowFinalizeByTimeout] = useState(false);
+    const [showWithdraw, setShowWithdraw] = useState(false);
+    const [winnerAddress, setWinnerAddress] = useState('')
 
     const { slug } = useParams()
     const wallet = useWallet()
@@ -24,6 +26,18 @@ export function Bonk() {
             slug
         })
         setShowFinalizeByTimeout(bonking.timeout.toNumber() < (Date.now() / 1000));
+        if (bonking.status === 2) {
+            let winnerBonk = await BonkService.findBonkByBonkingAddressAndNumber({
+                wallet,
+                connection: connection.connection,
+                bonkingAddress: bonking.key,
+                number: bonking.winner,
+            })
+            setWinnerAddress(winnerBonk.owner.toBase58())
+            if (winnerBonk.owner.toBase58() === wallet.publicKey?.toBase58()) {
+                setShowWithdraw(true)
+            }
+        }
         setBonking(bonking)
     }
 
@@ -52,6 +66,21 @@ export function Bonk() {
             connection: connection.connection,
             slug
         })
+        loadBonking()
+        alert('Ok')
+    }
+
+    async function withdraw() {
+        if (!slug) return;
+        let winnerBonk = BonkService.bonkPDA(bonking.key, bonking.winner)
+        await BonkingService.withdraw({
+            wallet,
+            connection: connection.connection,
+            slug,
+            winnerBonk,
+        })
+        loadBonking()
+        alert('Ok')
     }
 
     if (!slug) return (
@@ -76,7 +105,16 @@ export function Bonk() {
             </div>
             {bonking.status === 2 && (
                 <div>
-                    Winner {bonking.winner}
+                    Winner
+                    <div>
+                        Number: {bonking.winner}
+                    </div>
+                    <div>
+                        Address: {winnerAddress}
+                    </div>
+                    {showWithdraw && (
+                        <button onClick={withdraw}>Withdraw</button>
+                    )}
                 </div>
             )}
             {bonking.status === 1 && (
@@ -88,6 +126,9 @@ export function Bonk() {
                         <div>...</div>
                     )}
                 </>
+            )}
+            {bonking.status === 3 && (
+                <div>The End</div>
             )}
         </div>
     )

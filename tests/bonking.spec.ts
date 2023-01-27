@@ -241,7 +241,7 @@ describe("bonking", () => {
         const toAccount = await createAssociatedTokenAccount(connection, wallet.payer, mint, endUserWallet.publicKey)
 
         const winnerBonk = bonkPDA(program, bonkingAddress, bonkingObj3.winner);
-        console.log('withdraw success...')
+        console.log('withdraw...')
         await program.methods.withdraw().accounts({
             bonking: bonkingAddress, winnerBonk, escrowWallet, mint, to: toAccount,
             payer: endUserWallet.publicKey

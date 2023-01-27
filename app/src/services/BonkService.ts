@@ -10,7 +10,18 @@ type BonkArgs = {
     bonkingAddress: PublicKey,
 }
 
+type FindBonkArgs = BonkArgs & {
+    number: number
+}
+
 export class BonkService {
+
+    static async findBonkByBonkingAddressAndNumber({ connection, wallet, bonkingAddress, number }: FindBonkArgs) {
+        const program = ProgramService.getProgram(connection, wallet);
+        const bonkAddress = BonkService.bonkPDA(bonkingAddress, number);
+        return program.account.bonk.fetch(bonkAddress);
+    }
+
     static bonkPDA(bonking: PublicKey, number: number) {
         const bonkingBuffer = bonking.toBuffer();
         const bonkBuffer = Buffer.from("bonk");

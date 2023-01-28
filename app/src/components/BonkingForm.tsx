@@ -28,6 +28,11 @@ export function BonkingForm({ bonking, send }: BonkingFormProps) {
                     setInnerBonking({ ...innerBonking, timeout: +ev.target.value })
                 }} />
             </div>
+            <div>
+                Announcement Timeout: <input value={innerBonking.announcementTimeout} onChange={(ev) => {
+                    setInnerBonking({ ...innerBonking, announcementTimeout: +ev.target.value })
+                }} />
+            </div>
             <div style={{ borderRadius: 10, borderColor: '#ccc', borderStyle: 'solid' }}>
                 Bonk Price
                 <div>

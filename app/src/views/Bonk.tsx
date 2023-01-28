@@ -125,13 +125,19 @@ export function Bonk() {
         <div>
             Let's Bonk!
             <div>
-                Bonk price: {bonking.amount.toNumber()} {bonking.mint.toBase58()}
+                {bonking.amount.toNumber() === 0 ? (
+                    <div>It's almost free to bonk!!!</div>
+                ) : (
+                    <div>
+                        Bonk price: {bonking.amount.toNumber()} {bonking.mint.toBase58()}
+                    </div>
+                )}
             </div>
             <div>
-                Timeout: {new Date(bonking.timeout.toNumber() * 1000).toString()}
+                Bonking party ends at {new Date(bonking.timeout.toNumber() * 1000).toString()}
             </div>
             <div>
-                Bonks {bonking.count}
+                It was bonked {bonking.count} times!
             </div>
             {bonking.status === 2 && (
                 <div>

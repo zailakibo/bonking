@@ -32,7 +32,7 @@ describe("bonking", () => {
         );
 
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000));
-        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name2", new anchor.BN(0), PublicKey.default)
+        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name2", new anchor.BN(0), PublicKey.default, bonkTimeout)
             .accounts({
                 bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
             }).rpc();
@@ -105,7 +105,7 @@ describe("bonking", () => {
         );
 
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
-        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(0), PublicKey.default)
+        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(0), PublicKey.default, bonkTimeout)
             .accounts({
                 bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
             }).rpc();
@@ -181,7 +181,7 @@ describe("bonking", () => {
         );
 
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
-        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint)
+        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint, bonkTimeout)
             .accounts({
                 bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
             }).rpc();
@@ -265,7 +265,7 @@ describe("bonking", () => {
         expect(endUserAccountFinal.amount.toString()).to.eq(expected.toString());
     });
 
-    it.only("is a success! Initializing account", async () => {
+    it("is a success! Initializing account", async () => {
         const hashSource = "hash source x";
         const hash1 = keccak_256(hashSource);
         const bonkingAddress = BonkingService.findBonkingAddress("name")
@@ -284,7 +284,7 @@ describe("bonking", () => {
         );
 
         const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
-        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint)
+        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint, bonkTimeout)
             .accounts({
                 bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
             }).rpc();

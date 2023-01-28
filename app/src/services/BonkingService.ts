@@ -83,11 +83,12 @@ export class BonkingService {
 
         const hash1 = keccak_256(bonking.hashSource);
         const timeout = new anchor.BN(bonking.timeout)
+        const announcementTimeout = new anchor.BN(bonking.announcementTimeout);
         const amount = new anchor.BN(bonking.amount)
 
         const bonkingAddress = BonkingService.findBonkingAddress(bonking.slug);
         const escrowWallet = BonkingService.findEscrowAddress(bonkingAddress);
-        await program.methods.initialize(hash1 as any, timeout, bonking.slug, amount, bonking.mint)
+        await program.methods.initialize(hash1 as any, timeout, bonking.slug, amount, bonking.mint, announcementTimeout)
             .accounts({
                 bonking: bonkingAddress,
                 escrowWallet,

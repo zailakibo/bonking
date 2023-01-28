@@ -23,6 +23,7 @@ pub mod bonking {
         _slug: String,
         amount: u64,
         mint: Pubkey,
+        announcement_timeout: i64,
     ) -> Result<()> {
         ctx.accounts.bonking.count = 0;
         ctx.accounts.bonking.hash1 = hash;
@@ -32,6 +33,7 @@ pub mod bonking {
         ctx.accounts.bonking.amount = amount;
         ctx.accounts.bonking.mint = mint;
         ctx.accounts.bonking.owner = ctx.accounts.payer.key.to_owned();
+        ctx.accounts.bonking.announcement_timeout = announcement_timeout;
 
         // take the ownership of this TokenAccount
         let cpi_accounts = anchor_spl::token::SetAuthority {
@@ -64,6 +66,7 @@ pub mod bonking {
         }
         ctx.accounts.bonk.owner = ctx.accounts.payer.key();
         ctx.accounts.bonk.num = ctx.accounts.bonking.count;
+        ctx.accounts.bonk.announcement_timeout = ctx.accounts.bonking.announcement_timeout;
         let mut source = ctx.accounts.bonking.hash2.to_vec();
         let mut key = ctx.accounts.payer.key().to_bytes().to_vec().to_owned();
         source.append(&mut key);
@@ -186,6 +189,10 @@ pub mod bonking {
     pub fn close_bonking(ctx: Context<CloseBonking>) -> Result<()> {
         if ctx.accounts.bonking.status != 3 {
             panic!("Bonk is not ended");
+        }
+        let clock = Clock::get()?;
+        if clock.unix_timestamp < ctx.accounts.bonking.announcement_timeout {
+            panic!("Wait for a while to close the bonking");
         }
         let cpi_accounts = CloseAccount {
             account: ctx.accounts.escrow_wallet.to_account_info(),
@@ -454,6 +461,7 @@ pub struct Finalize<'info> {
 pub struct Bonk {
     owner: Pubkey,
     num: u32,
+    announcement_timeout: i64,
 }
 
 #[account]
@@ -468,4 +476,5 @@ pub struct Bonking {
     owner: Pubkey,
     amount: u64,
     mint: Pubkey,
+    announcement_timeout: i64,
 }

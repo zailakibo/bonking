@@ -69,6 +69,10 @@
         {
           "name": "mint",
           "type": "publicKey"
+        },
+        {
+          "name": "announcementTimeout",
+          "type": "i64"
         }
       ]
     },
@@ -323,6 +327,10 @@
           {
             "name": "num",
             "type": "u32"
+          },
+          {
+            "name": "announcementTimeout",
+            "type": "i64"
           }
         ]
       }
@@ -377,6 +385,10 @@
           {
             "name": "mint",
             "type": "publicKey"
+          },
+          {
+            "name": "announcementTimeout",
+            "type": "i64"
           }
         ]
       }

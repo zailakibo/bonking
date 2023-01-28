@@ -24,6 +24,7 @@ export function Bonking() {
     let bonking: BonkingModel = {
         slug,
         timeout: Math.floor(Date.now() / 1000) + 15 * 60,
+        announcementTimeout: Math.floor(Date.now() / 1000) + 15 * 60,
         amount: 0,
         mint: new PublicKey('So11111111111111111111111111111111111111112'),
         prizeMint: new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'),

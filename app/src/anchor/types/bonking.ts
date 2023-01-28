@@ -69,6 +69,10 @@ export type Bonking = {
         {
           "name": "mint",
           "type": "publicKey"
+        },
+        {
+          "name": "announcementTimeout",
+          "type": "i64"
         }
       ]
     },
@@ -323,6 +327,10 @@ export type Bonking = {
           {
             "name": "num",
             "type": "u32"
+          },
+          {
+            "name": "announcementTimeout",
+            "type": "i64"
           }
         ]
       }
@@ -377,6 +385,10 @@ export type Bonking = {
           {
             "name": "mint",
             "type": "publicKey"
+          },
+          {
+            "name": "announcementTimeout",
+            "type": "i64"
           }
         ]
       }
@@ -455,6 +467,10 @@ export const IDL: Bonking = {
         {
           "name": "mint",
           "type": "publicKey"
+        },
+        {
+          "name": "announcementTimeout",
+          "type": "i64"
         }
       ]
     },
@@ -709,6 +725,10 @@ export const IDL: Bonking = {
           {
             "name": "num",
             "type": "u32"
+          },
+          {
+            "name": "announcementTimeout",
+            "type": "i64"
           }
         ]
       }
@@ -763,6 +783,10 @@ export const IDL: Bonking = {
           {
             "name": "mint",
             "type": "publicKey"
+          },
+          {
+            "name": "announcementTimeout",
+            "type": "i64"
           }
         ]
       }

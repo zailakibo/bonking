@@ -1,6 +1,6 @@
 # Bonking
 
-This is a lottery-like program.
+This is a lottery-like or raffe program.
 
 A promoter can raffle an NFT or an amount of tokens.
 

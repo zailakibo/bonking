@@ -78,9 +78,11 @@ describe("bonking", () => {
             bonking: bonkingAddress, winnerBonk, escrowWallet, mint, to: toAccount
         }).rpc()
 
+        const payerAccount = await getOrCreateAssociatedTokenAccount(program.provider.connection, wallet.payer, mint, wallet.publicKey);
         await program.methods.closeBonking().accounts({
             bonking: bonkingAddress,
             escrowWallet,
+            to: payerAccount.address,
         }).rpc()
 
         await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 0, wallet.payer);
@@ -152,9 +154,11 @@ describe("bonking", () => {
             bonking: bonkingAddress, winnerBonk, escrowWallet, mint, to: toAccount
         }).rpc()
 
+        const payerAccount = await getOrCreateAssociatedTokenAccount(program.provider.connection, wallet.payer, mint, wallet.publicKey);
         await program.methods.closeBonking().accounts({
             bonking: bonkingAddress,
             escrowWallet,
+            to: payerAccount.address,
         }).rpc()
 
         await closeBonkNotWinner(program, bonkingAddress, bonkingObj3.winner, 0, wallet.payer);
@@ -250,9 +254,11 @@ describe("bonking", () => {
             .rpc()
 
         console.log('close bonking...')
+        const payerAccount = await getOrCreateAssociatedTokenAccount(program.provider.connection, wallet.payer, mint, wallet.publicKey);
         await program.methods.closeBonking().accounts({
             bonking: bonkingAddress,
             escrowWallet,
+            to: payerAccount.address,
         }).rpc()
 
         console.log('close bonks...')
@@ -355,9 +361,11 @@ describe("bonking", () => {
             .rpc()
 
         console.log('close bonking...')
+        const payerAccount = await getOrCreateAssociatedTokenAccount(program.provider.connection, wallet.payer, mint, wallet.publicKey);
         await program.methods.closeBonking().accounts({
             bonking: bonkingAddress,
             escrowWallet,
+            to: payerAccount.address,
         }).rpc()
 
         console.log('close bonks...')
@@ -368,6 +376,56 @@ describe("bonking", () => {
         const endUserAccountFinal = await getOrCreateAssociatedTokenAccount(program.provider.connection, wallet.payer, mint, endUserWallet.publicKey);
         const expected = 5_000_000_000;
         expect(endUserAccountFinal.amount.toString()).to.eq(expected.toString());
+    });
+
+    it("should close without winner", async () => {
+        const hashSource = "hash source x";
+        const hash1 = keccak_256(hashSource);
+        const bonkingAddress = BonkingService.findBonkingAddress("name")
+        const provider = program.provider as anchor.AnchorProvider;
+        const wallet = provider.wallet as NodeWallet;
+        const mint = await createMint(connection, wallet.payer, provider.publicKey, provider.publicKey, 9);
+
+        const payWithMint = await createMint(connection, wallet.payer, provider.publicKey, provider.publicKey, 9);
+
+        const [escrowWallet] = PublicKey.findProgramAddressSync(
+            [
+                Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
+                bonkingAddress.toBuffer(),
+            ],
+            program.programId
+        );
+
+        const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) - (14 * 60 * 60));
+        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint)
+            .accounts({
+                bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
+            }).rpc();
+        console.log("Your transaction signature", tx);
+
+        // check transfer the ownership of the escrow
+        const escrowWalletTokenAccount = await getAccount(connection, escrowWallet);
+        expect(escrowWalletTokenAccount.owner).not.to.eql(provider.publicKey);
+        expect(escrowWalletTokenAccount.owner).to.eql(escrowWallet);
+
+        // put the value on escrow
+        await mintTo(connection, wallet.payer, mint, escrowWallet, wallet.payer, 5_000_000_000);
+
+        const payerAccount = await getOrCreateAssociatedTokenAccount(program.provider.connection, wallet.payer, mint, wallet.publicKey);
+
+        // finalize the operation
+        console.log('finalizing...')
+        await program.methods.finalizeByTimeout()
+            .accounts({
+                bonking: bonkingAddress,
+            }).rpc();
+
+        console.log('close bonking...')
+        await program.methods.closeBonking().accounts({
+            bonking: bonkingAddress,
+            escrowWallet,
+            to: payerAccount.address,
+        }).rpc()
     });
 });
 

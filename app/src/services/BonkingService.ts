@@ -43,7 +43,21 @@ type FechArgs = {
     bonkingAddress: anchor.Address
 }
 
+type CloseArgs = {
+    connection: Connection
+    wallet: any
+    bonkingAddress: anchor.Address
+}
+
 export class BonkingService {
+    static async close({ connection, wallet, bonkingAddress }: CloseArgs) {
+        const program = ProgramService.getProgram(connection, wallet);
+        const escrowWallet = BonkingService.findEscrowAddress(bonkingAddress);
+        await program.methods.closeBonking().accounts({
+            bonking: bonkingAddress,
+            escrowWallet,
+        }).rpc()
+    }
 
     static async listAllBonking({ connection, wallet }: ListAllBonkingsArgs) {
         const program = ProgramService.getProgram(connection, wallet);
@@ -61,7 +75,8 @@ export class BonkingService {
         return bonkingAddress
     }
 
-    static findEscrowAddress(bonkingAddress: PublicKey) {
+    static findEscrowAddress(bonkingAddress: anchor.Address) {
+        bonkingAddress = typeof bonkingAddress === 'string' ? new PublicKey(bonkingAddress) : bonkingAddress;
         const [escrowWallet] = PublicKey.findProgramAddressSync(
             [
                 Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),

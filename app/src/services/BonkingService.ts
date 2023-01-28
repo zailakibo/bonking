@@ -3,7 +3,7 @@ import { keccak_256 } from "@noble/hashes/sha3";
 import { ProgramService } from './ProgramService';
 import * as anchor from "@project-serum/anchor";
 import { BonkingModel } from '../models/BonkingModel';
-import { getAccount, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
+import { getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
 import { TokenAccountService } from './TokenAccountService';
 
 const BONKING = Buffer.from(keccak_256("bonking"));
@@ -50,15 +50,30 @@ type CloseArgs = {
     bonkingAddress: anchor.Address,
 }
 
+type FindEscrowAccountArgs = {
+    connection: Connection
+    bonkingAddress: anchor.Address,
+}
+
+
 export class BonkingService {
+
+    static findEscrowAccount({ connection, bonkingAddress }: FindEscrowAccountArgs) {
+        const escrowAddress = BonkingService.findEscrowAddress(bonkingAddress)
+        return getAccount(connection, escrowAddress)
+    }
+
     static async close({ connection, wallet, bonkingAddress }: CloseArgs) {
+        if (!wallet.publicKey) {
+            throw new Error('Missing wallet.publicKey')
+        }
         const program = ProgramService.getProgram(connection, wallet);
         const escrowWalletAddress = BonkingService.findEscrowAddress(bonkingAddress);
         const escrowWallet = await getAccount(connection, escrowWalletAddress);
         const bonking = await BonkingService.fetch({ connection, wallet, bonkingAddress });
         const toAccount = await TokenAccountService.findTokenAccountAddress(connection, bonking.owner, escrowWallet.mint);
         if (!toAccount) {
-            throw new Error('Account to redeem is not found');
+            throw new Error('Token account not found!')
         }
         await program.methods.closeBonking().accounts({
             bonking: bonkingAddress,

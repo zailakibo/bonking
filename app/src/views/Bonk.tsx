@@ -1,8 +1,10 @@
 import { useWallet, useConnection } from "@solana/wallet-adapter-react"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
+import { Prize } from "../components/Prize"
 import { BonkingService } from "../services/BonkingService"
 import { BonkService } from "../services/BonkService"
+import { TokenAccountService } from "../services/TokenAccountService"
 
 export function Bonk() {
     const [bonking, setBonking] = useState<any>()
@@ -114,11 +116,23 @@ export function Bonk() {
     }
 
     async function closeTheBonk() {
-        await BonkingService.close({
-            wallet,
-            connection: connection.connection,
-            bonkingAddress: getBonkingAddress(),
-        })
+        try {
+            await BonkingService.close({
+                wallet,
+                connection: connection.connection,
+                bonkingAddress: getBonkingAddress(),
+            })
+        } catch (e) {
+            if (e instanceof Error) {
+                if (/token account not found/i.test(e.message) && window.confirm('Create TokenAccount?')) {
+                    const escrowAccount = await BonkingService.findEscrowAccount({
+                        connection: connection.connection,
+                        bonkingAddress: getBonkingAddress(),
+                    })
+                    await TokenAccountService.createATA(connection.connection, wallet, escrowAccount.mint, bonking.owner)
+                }
+            }
+        }
         alert('Ok')
     }
 
@@ -142,6 +156,7 @@ export function Bonk() {
             <div>
                 Bonks {bonking.count}
             </div>
+            <Prize bonking={bonking} />
             {bonking.status === 2 && (
                 <div>
                     Winner
@@ -172,6 +187,9 @@ export function Bonk() {
                     <button onClick={closeTheBonk}>Close the bonk!</button>
                 </>
             )}
+            <div>
+                Promoter: {bonking.owner.toBase58()}
+            </div>
         </div>
     )
 }

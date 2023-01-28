@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { PublicKey, Connection } from '@solana/web3.js'
 import { ProgramService } from "./ProgramService";
 import { Buffer } from 'buffer';
-import { getAccount, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
 import { TokenAccountService } from "./TokenAccountService";
 
 type BonkArgs = {

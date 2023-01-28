@@ -278,6 +278,11 @@ export type Bonking = {
           ]
         },
         {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "payer",
           "isMut": true,
           "isSigner": true
@@ -662,6 +667,11 @@ export const IDL: Bonking = {
           "docs": [
             "will be closed"
           ]
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "payer",

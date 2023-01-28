@@ -1,5 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{token::{Mint, Token, TokenAccount}, associated_token::AssociatedToken};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
 use std::mem::size_of;
 
 declare_id!("Gx2UZFaDLEw3XQZdrdrTEEGfEBP9itEHuE4xpdGFJDUJ");
@@ -163,10 +166,10 @@ pub mod bonking {
     pub fn withdraw_initializing_token_account(
         ctx: Context<WithdrawInitializingWinnerTokenAccount>,
     ) -> Result<()> {
+        verify_winner(&mut ctx.accounts.bonking, &ctx.accounts.winner_bonk)?;
         inner_withdraw(
             ctx.program_id,
             &mut ctx.accounts.bonking,
-            &ctx.accounts.winner_bonk,
             &ctx.accounts.escrow_wallet.to_account_info(),
             &ctx.accounts.to.to_account_info(),
             &ctx.accounts.token_program.to_account_info(),
@@ -176,10 +179,10 @@ pub mod bonking {
     }
 
     pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
+        verify_winner(&mut ctx.accounts.bonking, &ctx.accounts.winner_bonk)?;
         inner_withdraw(
             ctx.program_id,
             &mut ctx.accounts.bonking,
-            &ctx.accounts.winner_bonk,
             &ctx.accounts.escrow_wallet.to_account_info(),
             &ctx.accounts.to.to_account_info(),
             &ctx.accounts.token_program.to_account_info(),
@@ -192,13 +195,25 @@ pub mod bonking {
         if ctx.accounts.bonking.status != 3 {
             panic!("Bonk is not ended");
         }
+
+        if ctx.accounts.escrow_wallet.amount > 0 {
+            inner_withdraw(
+                ctx.program_id,
+                &mut ctx.accounts.bonking,
+                &ctx.accounts.escrow_wallet.to_account_info(),
+                &ctx.accounts.to.to_account_info(),
+                &ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.escrow_wallet.amount,
+            )?;
+        }
+
+        // Close the escrow wallet
         let cpi_accounts = CloseAccount {
             account: ctx.accounts.escrow_wallet.to_account_info(),
             destination: ctx.accounts.payer.to_account_info(),
             authority: ctx.accounts.escrow_wallet.to_account_info(),
         };
 
-        // Close the wallet
         let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(
             &[
                 b"wallet",
@@ -227,15 +242,7 @@ pub mod bonking {
     }
 }
 
-fn inner_withdraw<'a>(
-    program_id: &Pubkey,
-    bonking: &mut Account<Bonking>,
-    bonk: &Account<Bonk>,
-    escrow_wallet: &AccountInfo<'a>,
-    to: &AccountInfo<'a>,
-    token_program: &AccountInfo<'a>,
-    amount: u64,
-) -> Result<()> {
+fn verify_winner(bonking: &mut Account<Bonking>, bonk: &Account<Bonk>) -> Result<()> {
     msg!("winner = {}; status = {:?}", bonking.winner, bonking.status);
     if bonking.status != 2 {
         panic!("Wrong status");
@@ -254,7 +261,17 @@ fn inner_withdraw<'a>(
     if bonk.num != bonking.winner {
         panic!("Wrong winner");
     }
+    Ok(())
+}
 
+fn inner_withdraw<'a>(
+    program_id: &Pubkey,
+    bonking: &mut Account<Bonking>,
+    escrow_wallet: &AccountInfo<'a>,
+    to: &AccountInfo<'a>,
+    token_program: &AccountInfo<'a>,
+    amount: u64,
+) -> Result<()> {
     let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(
         &[b"wallet", bonking.to_account_info().key.as_ref()],
         program_id,
@@ -299,6 +316,9 @@ pub struct CloseBonking<'info> {
     /// will be closed
     #[account(mut)]
     escrow_wallet: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    to: Account<'info, TokenAccount>,
 
     #[account(mut)]
     payer: Signer<'info>,

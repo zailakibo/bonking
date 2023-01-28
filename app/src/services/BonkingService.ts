@@ -4,6 +4,7 @@ import { ProgramService } from './ProgramService';
 import * as anchor from "@project-serum/anchor";
 import { BonkingModel } from '../models/BonkingModel';
 import { getAccount, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
+import { TokenAccountService } from './TokenAccountService';
 
 const BONKING = Buffer.from(keccak_256("bonking"));
 
@@ -46,16 +47,23 @@ type FechArgs = {
 type CloseArgs = {
     connection: Connection
     wallet: any
-    bonkingAddress: anchor.Address
+    bonkingAddress: anchor.Address,
 }
 
 export class BonkingService {
     static async close({ connection, wallet, bonkingAddress }: CloseArgs) {
         const program = ProgramService.getProgram(connection, wallet);
-        const escrowWallet = BonkingService.findEscrowAddress(bonkingAddress);
+        const escrowWalletAddress = BonkingService.findEscrowAddress(bonkingAddress);
+        const escrowWallet = await getAccount(connection, escrowWalletAddress);
+        const bonking = await BonkingService.fetch({ connection, wallet, bonkingAddress });
+        const toAccount = await TokenAccountService.findTokenAccountAddress(connection, bonking.owner, escrowWallet.mint);
+        if (!toAccount) {
+            throw new Error('Account to redeem is not found');
+        }
         await program.methods.closeBonking().accounts({
             bonking: bonkingAddress,
-            escrowWallet,
+            escrowWallet: escrowWalletAddress,
+            to: toAccount,
         }).rpc()
     }
 

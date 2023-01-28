@@ -8,8 +8,8 @@ bonking = "Gx2UZFaDLEw3XQZdrdrTEEGfEBP9itEHuE4xpdGFJDUJ"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
-# cluster = "localnet"
+# cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

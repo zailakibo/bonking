@@ -20,6 +20,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/create" element={<Bonking />} />
             <Route path="/bonk/:slug" element={<Bonk />} />
+            <Route path="/bonking/:bonkingAddress" element={<Bonk />} />
           </Routes>
         </Wallet>
       </Router>

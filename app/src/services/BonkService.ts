@@ -2,7 +2,8 @@ import * as anchor from "@project-serum/anchor";
 import { PublicKey, Connection } from '@solana/web3.js'
 import { ProgramService } from "./ProgramService";
 import { Buffer } from 'buffer';
-import { getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { getAccount, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { TokenAccountService } from "./TokenAccountService";
 
 type BonkArgs = {
     connection: Connection,
@@ -52,9 +53,9 @@ export class BonkService {
     static async payToBonk({ connection, wallet, bonkingAddress }: BonkArgs) {
         const program = ProgramService.getProgram(connection, wallet);
         const bonkingObj = await program.account.bonking.fetch(bonkingAddress);
-        const toAccount = await getOrCreateAssociatedTokenAccount(connection, wallet, bonkingObj.mint, bonkingObj.owner)
-        const fromAccount = getAssociatedTokenAddressSync(bonkingObj.mint, wallet.publicKey)
+        const toAccount = await getOrCreateAssociatedTokenAccount(connection, wallet, bonkingObj.mint, bonkingObj.owner);
         const bonk = BonkService.bonkPDA(bonkingAddress, bonkingObj.count);
+        const fromAccount = await TokenAccountService.findTokenAccountAddress(connection, wallet.publicKey, bonkingObj.mint);
         await program.methods.payedBonk()
             .accounts({
                 bonking: bonkingAddress,

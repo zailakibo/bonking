@@ -167,6 +167,57 @@ export type Bonking = {
       "args": []
     },
     {
+      "name": "withdrawInitializingTokenAccount",
+      "accounts": [
+        {
+          "name": "bonking",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "winnerBonk",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "withdraw",
       "accounts": [
         {
@@ -496,6 +547,57 @@ export const IDL: Bonking = {
         {
           "name": "bonking",
           "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdrawInitializingTokenAccount",
+      "accounts": [
+        {
+          "name": "bonking",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "winnerBonk",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
           "isSigner": false
         }
       ],

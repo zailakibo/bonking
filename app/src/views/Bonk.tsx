@@ -10,21 +10,26 @@ export function Bonk() {
     const [showWithdraw, setShowWithdraw] = useState(false);
     const [winnerAddress, setWinnerAddress] = useState('')
 
-    const { slug } = useParams()
+    const { slug, bonkingAddress } = useParams()
     const wallet = useWallet()
     const connection = useConnection()
 
     useEffect(() => {
-        loadBonking()
-    }, [slug])
+        initialize()
+    }, [slug, bonkingAddress, wallet])
 
-    async function loadBonking() {
-        if (!slug) return;
-        const bonking = await BonkingService.findBonkingBySlug({
-            wallet,
-            connection: connection.connection,
-            slug
-        })
+    async function reInitialize() {
+        await initialize()
+    }
+
+    async function initialize() {
+        const bonking = await loadBonking()
+        handleStatus(bonking)
+        setBonking(bonking)
+    }
+
+    async function handleStatus(bonking: any) {
+        if (!bonking.key) throw new Error('Missing bonking.key');
         setShowFinalizeByTimeout(bonking.timeout.toNumber() < (Date.now() / 1000));
         if (bonking.status === 2) {
             let winnerBonk = await BonkService.findBonkByBonkingAddressAndNumber({
@@ -38,7 +43,24 @@ export function Bonk() {
                 setShowWithdraw(true)
             }
         }
-        setBonking(bonking)
+    }
+
+    async function loadBonking() {
+        if (slug) {
+            const bonking = await BonkingService.findBonkingBySlug({
+                wallet,
+                connection: connection.connection,
+                slug
+            })
+            return bonking;
+        } else if (bonkingAddress) {
+            const bonking = await BonkingService.fetch({
+                wallet,
+                connection: connection.connection,
+                bonkingAddress
+            })
+            return bonking;
+        }
     }
 
     async function doBonk() {
@@ -55,35 +77,43 @@ export function Bonk() {
                 bonkingAddress: bonking.key
             })
         }
-        loadBonking()
+        reInitialize()
         alert("Ok")
     }
 
+    function getBonkingAddress() {
+        if (slug) {
+            return BonkingService.findBonkingAddress(slug)
+        } else if (bonkingAddress) {
+            return bonkingAddress
+        } else {
+            throw Error('Unable to define bonking')
+        }
+    }
+
     async function finalizeByTimeout() {
-        if (!slug) return;
         await BonkingService.finalizeByTimeout({
             wallet,
             connection: connection.connection,
-            slug
+            bonkingAddress: getBonkingAddress()
         })
-        loadBonking()
+        reInitialize()
         alert('Ok')
     }
 
     async function withdraw() {
-        if (!slug) return;
         let winnerBonk = BonkService.bonkPDA(bonking.key, bonking.winner)
         await BonkingService.withdraw({
             wallet,
             connection: connection.connection,
-            slug,
+            bonkingAddress: getBonkingAddress(),
             winnerBonk,
         })
-        loadBonking()
+        reInitialize()
         alert('Ok')
     }
 
-    if (!slug) return (
+    if (!slug && !bonkingAddress) return (
         <div>Oopsss!!! Something wrong is not right!</div>
     );
 

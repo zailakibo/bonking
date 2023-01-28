@@ -3,9 +3,14 @@ import { keccak_256 } from "@noble/hashes/sha3";
 import { ProgramService } from './ProgramService';
 import * as anchor from "@project-serum/anchor";
 import { BonkingModel } from '../models/BonkingModel';
-import { getAccount, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
+import { getAccount, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 
 const BONKING = Buffer.from(keccak_256("bonking"));
+
+type ListAllBonkingsArgs = {
+    connection: Connection
+    wallet: any
+}
 
 type InitializeArgs = {
     connection: Connection
@@ -19,14 +24,31 @@ type FindBonkingBySlugArgs = {
     slug: string
 }
 
+type FinalizeArgs = {
+    connection: Connection
+    wallet: any
+    bonkingAddress: anchor.Address
+}
+
 type WithdrawArgs = {
     connection: Connection
     wallet: any
-    slug: string
+    bonkingAddress: anchor.Address
     winnerBonk: PublicKey
 }
 
+type FechArgs = {
+    connection: Connection
+    wallet: any
+    bonkingAddress: anchor.Address
+}
+
 export class BonkingService {
+
+    static async listAllBonking({ connection, wallet }: ListAllBonkingsArgs) {
+        const program = ProgramService.getProgram(connection, wallet);
+        return program.account.bonking.all()
+    }
 
     static findBonkingAddress(slug: string) {
         const [bonkingAddress] = PublicKey.findProgramAddressSync(
@@ -76,32 +98,47 @@ export class BonkingService {
     }
 
     static async findBonkingBySlug({ connection, wallet, slug }: FindBonkingBySlugArgs) {
-        const program = ProgramService.getProgram(connection, wallet);
         const bonkingAddress = BonkingService.findBonkingAddress(slug);
-        const bonking = await program.account.bonking.fetch(bonkingAddress);
-        return { ...bonking, key: bonkingAddress };
+        return BonkingService.fetch({ connection, wallet, bonkingAddress })
     }
 
-    static async finalizeByTimeout({ connection, wallet, slug }: FindBonkingBySlugArgs) {
+    static async fetch({ connection, wallet, bonkingAddress }: FechArgs) {
         const program = ProgramService.getProgram(connection, wallet);
-        const bonkingAddress = BonkingService.findBonkingAddress(slug);
+        const bonking = await program.account.bonking.fetch(bonkingAddress);
+        return { ...bonking, key: typeof bonkingAddress === 'string' ? new PublicKey(bonkingAddress) : bonkingAddress };
+    }
+
+    static async finalizeByTimeout({ connection, wallet, bonkingAddress }: FinalizeArgs) {
+        const program = ProgramService.getProgram(connection, wallet);
         await program.methods.finalizeByTimeout()
             .accounts({
-                bonking: bonkingAddress
+                bonking: new PublicKey(bonkingAddress)
             }).rpc();
     }
 
-    static async withdraw({ connection, wallet, slug, winnerBonk }: WithdrawArgs) {
+    static async withdraw({ connection, wallet, bonkingAddress, winnerBonk }: WithdrawArgs) {
+        bonkingAddress = typeof bonkingAddress === 'string' ? new PublicKey(bonkingAddress) : bonkingAddress;
         const program = ProgramService.getProgram(connection, wallet);
-        const bonkingAddress = BonkingService.findBonkingAddress(slug);
         const escrowWallet = BonkingService.findEscrowAddress(bonkingAddress);
         const escrowObj = await getAccount(connection, escrowWallet);
-        const toAccount = await getOrCreateAssociatedTokenAccount(connection, wallet, escrowObj.mint, wallet.publicKey)
-        await program.methods.withdraw().accounts({
-            bonking: bonkingAddress, winnerBonk, escrowWallet,
-            mint: escrowObj.mint, to: toAccount.address,
-        })
-            .rpc()
-
+        const ata = await getAssociatedTokenAddress(escrowObj.mint, wallet.publicKey);
+        try {
+            await getAccount(connection, ata);
+            await program.methods.withdraw()
+                .accounts({
+                    bonking: bonkingAddress, winnerBonk, escrowWallet,
+                    mint: escrowObj.mint, to: ata,
+                })
+                .rpc()
+        } catch (e) {
+            console.log(e)
+            await program.methods.withdrawInitializingTokenAccount()
+                .accounts({
+                    bonking: bonkingAddress, winnerBonk, escrowWallet,
+                    mint: escrowObj.mint, to: ata,
+                    payer: wallet.publicKey,
+                })
+                .rpc()
+        }
     }
 }

@@ -113,6 +113,15 @@ export function Bonk() {
         alert('Ok')
     }
 
+    async function closeTheBonk() {
+        await BonkingService.close({
+            wallet,
+            connection: connection.connection,
+            bonkingAddress: getBonkingAddress(),
+        })
+        alert('Ok')
+    }
+
     if (!slug && !bonkingAddress) return (
         <div>Oopsss!!! Something wrong is not right!</div>
     );
@@ -164,7 +173,10 @@ export function Bonk() {
                 </>
             )}
             {bonking.status === 3 && (
-                <div>The End</div>
+                <>
+                    <div>The End</div>
+                    <button onClick={closeTheBonk}>Close the bonk!</button>
+                </>
             )}
         </div>
     )

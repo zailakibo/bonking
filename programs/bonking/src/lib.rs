@@ -149,9 +149,14 @@ pub mod bonking {
         if clock.unix_timestamp > ctx.accounts.bonking.timeout + tolerance {
             let most_recent = arrayref::array_ref![ctx.accounts.bonking.hash2, 12, 4];
             let number = u32::from_le_bytes(*most_recent);
-            let index = number % ctx.accounts.bonking.count;
-            ctx.accounts.bonking.winner = index;
-            ctx.accounts.bonking.status = 2;
+            if ctx.accounts.bonking.count == 0 {
+                // when there is no bonkers we skip to the end
+                ctx.accounts.bonking.status = 3;
+            } else {
+                let index = number % ctx.accounts.bonking.count;
+                ctx.accounts.bonking.winner = index;
+                ctx.accounts.bonking.status = 2;
+            }
         } else {
             panic!("Wait for a while");
         }

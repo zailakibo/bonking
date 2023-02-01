@@ -55,7 +55,6 @@ type FindEscrowAccountArgs = {
     bonkingAddress: anchor.Address,
 }
 
-
 export class BonkingService {
 
     static findEscrowAccount({ connection, bonkingAddress }: FindEscrowAccountArgs) {

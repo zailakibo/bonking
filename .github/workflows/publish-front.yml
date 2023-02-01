@@ -19,8 +19,8 @@ jobs:
       - name: Build Frontend
         run: |
           ls ${{ github.workspace }}
-          npm ci
           cd ./app
+          npm ci
           rm -rf ./build
           export NODE_ENV=production
           npm run build

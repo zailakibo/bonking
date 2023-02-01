@@ -23,6 +23,7 @@ jobs:
           npm ci
           rm -rf ./build
           export NODE_ENV=production
+          export CI=false
           npm run build
           cd ./build
           cp ./index.html ./404.html

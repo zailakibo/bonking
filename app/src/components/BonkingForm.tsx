@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { BonkingModel } from '../models/BonkingModel';
 import { PublicKey } from '@solana/web3.js'
+import { Button } from './Button';
 
 type BonkingFormProps = {
     bonking: BonkingModel,
-    send: (bonking: BonkingModel) => void
+    send: (bonking: BonkingModel) => Promise<void>
 }
 
 export function BonkingForm({ bonking, send }: BonkingFormProps) {
@@ -51,9 +52,9 @@ export function BonkingForm({ bonking, send }: BonkingFormProps) {
                     setInnerBonking({ ...innerBonking, prizeMint: new PublicKey(ev.target.value) })
                 }} />
             </div>
-            <button onClick={() => {
-                send(innerBonking)
-            }}>Send</button>
+            <Button onClick={async () => {
+                await send(innerBonking)
+            }}>Send</Button>
         </div>
     )
 }

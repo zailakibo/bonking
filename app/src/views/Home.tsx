@@ -2,6 +2,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Button } from "../components/Button";
 import { BonkingService } from "../services/BonkingService";
 import { BonkService } from "../services/BonkService";
 
@@ -22,7 +23,9 @@ export function Home() {
         const bonks = await BonkService.findAllBonksByOwner({
             wallet, connection: connection.connection
         })
-        setBonks(bonks)
+        setBonks(bonks.filter(bonk => {
+            return bonk.account.owner.toBase58() === wallet.publicKey?.toBase58()
+        }))
     }, [wallet, connection])
 
     useEffect(() => {
@@ -55,13 +58,13 @@ export function Home() {
                 return <div key={bonk.publicKey.toBase58()}>
                     Bonk!
                     {bonk.account.owner.toBase58()}
-                    <button
-                        onClick={() => {
-                            closeBonk(bonk.publicKey)
+                    <Button
+                        onClick={async () => {
+                            await closeBonk(bonk.publicKey)
                         }}
                     >
                         Close!
-                    </button>
+                    </Button>
                 </div>
             })}
         </div>

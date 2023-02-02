@@ -1,6 +1,7 @@
 import { useWallet, useConnection } from "@solana/wallet-adapter-react"
 import { useCallback, useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
+import { Button } from "../components/Button"
 import { Prize } from "../components/Prize"
 import { BonkingService } from "../services/BonkingService"
 import { BonkService } from "../services/BonkService"
@@ -173,15 +174,15 @@ export function Bonk() {
                         Address: {winnerAddress}
                     </div>
                     {showWithdraw && (
-                        <button onClick={withdraw}>Withdraw</button>
+                        <Button onClick={withdraw}>Withdraw</Button>
                     )}
                 </div>
             )}
             {bonking.status === 1 && (
                 <>
-                    <button onClick={doBonk}>Bonk</button>
+                    <Button onClick={doBonk}>Bonk</Button>
                     {showFinalizeByTimeout ? (
-                        <button onClick={finalizeByTimeout}>Finalize by timeout</button>
+                        <Button onClick={finalizeByTimeout}>Finalize by timeout</Button>
                     ) : (
                         <div>...</div>
                     )}
@@ -190,7 +191,7 @@ export function Bonk() {
             {bonking.status === 3 && (
                 <>
                     <div>The End</div>
-                    <button onClick={closeTheBonk}>Close the bonk!</button>
+                    <Button onClick={closeTheBonk}>Close the bonk!</Button>
                 </>
             )}
             <div>

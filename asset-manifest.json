@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/bonking/static/css/main.51fd958c.css",
-    "main.js": "/bonking/static/js/main.03f16146.js",
+    "main.js": "/bonking/static/js/main.bcb48822.js",
     "static/js/787.28cb0dcd.chunk.js": "/bonking/static/js/787.28cb0dcd.chunk.js",
     "index.html": "/bonking/index.html",
     "main.51fd958c.css.map": "/bonking/static/css/main.51fd958c.css.map",
-    "main.03f16146.js.map": "/bonking/static/js/main.03f16146.js.map",
+    "main.bcb48822.js.map": "/bonking/static/js/main.bcb48822.js.map",
     "787.28cb0dcd.chunk.js.map": "/bonking/static/js/787.28cb0dcd.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.51fd958c.css",
-    "static/js/main.03f16146.js"
+    "static/js/main.bcb48822.js"
   ]
 }

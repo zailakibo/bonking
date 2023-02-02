@@ -1,5 +1,5 @@
 import { useWallet, useConnection } from "@solana/wallet-adapter-react"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { Prize } from "../components/Prize"
 import { BonkingService } from "../services/BonkingService"
@@ -16,38 +16,7 @@ export function Bonk() {
     const wallet = useWallet()
     const connection = useConnection()
 
-    useEffect(() => {
-        initialize()
-    }, [slug, bonkingAddress, wallet])
-
-    async function reInitialize() {
-        await initialize()
-    }
-
-    async function initialize() {
-        const bonking = await loadBonking()
-        handleStatus(bonking)
-        setBonking(bonking)
-    }
-
-    async function handleStatus(bonking: any) {
-        if (!bonking.key) throw new Error('Missing bonking.key');
-        setShowFinalizeByTimeout(bonking.timeout.toNumber() < (Date.now() / 1000));
-        if (bonking.status === 2) {
-            let winnerBonk = await BonkService.findBonkByBonkingAddressAndNumber({
-                wallet,
-                connection: connection.connection,
-                bonkingAddress: bonking.key,
-                number: bonking.winner,
-            })
-            setWinnerAddress(winnerBonk.owner.toBase58())
-            if (winnerBonk.owner.toBase58() === wallet.publicKey?.toBase58()) {
-                setShowWithdraw(true)
-            }
-        }
-    }
-
-    async function loadBonking() {
+    const loadBonking = useCallback(async () => {
         if (slug) {
             const bonking = await BonkingService.findBonkingBySlug({
                 wallet,
@@ -63,6 +32,37 @@ export function Bonk() {
             })
             return bonking;
         }
+    }, [slug, wallet, connection, bonkingAddress])
+
+    const handleStatus = useCallback(async (bonking: any) => {
+        if (!bonking.key) throw new Error('Missing bonking.key');
+        setShowFinalizeByTimeout(bonking.timeout.toNumber() < (Date.now() / 1000));
+        if (bonking.status === 2) {
+            let winnerBonk = await BonkService.findBonkByBonkingAddressAndNumber({
+                wallet,
+                connection: connection.connection,
+                bonkingAddress: bonking.key,
+                number: bonking.winner,
+            })
+            setWinnerAddress(winnerBonk.owner.toBase58())
+            if (winnerBonk.owner.toBase58() === wallet.publicKey?.toBase58()) {
+                setShowWithdraw(true)
+            }
+        }
+    }, [wallet, connection])
+
+    const initialize = useCallback(async () => {
+        const bonking = await loadBonking()
+        handleStatus(bonking)
+        setBonking(bonking)
+    }, [handleStatus, setBonking, loadBonking])
+
+    useEffect(() => {
+        initialize()
+    }, [slug, bonkingAddress, wallet, initialize])
+
+    async function reInitialize() {
+        await initialize()
     }
 
     async function doBonk() {

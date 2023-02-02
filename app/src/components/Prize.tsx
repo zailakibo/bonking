@@ -16,15 +16,14 @@ export function Prize({ bonking }: PrizeArgs) {
     const [mint, setMint] = useState('')
 
     useEffect(() => {
+        async function loadAccount(bonkingAddress: any) {
+            const escrowAddress = BonkingService.findEscrowAddress(bonkingAddress)
+            const account = await getAccount(connection.connection, escrowAddress)
+            setAmount(account.amount.toString());
+            setMint(account.mint.toBase58())
+        }
         loadAccount(bonking.key)
-    }, [bonking])
-
-    async function loadAccount(bonkingAddress: any) {
-        const escrowAddress = BonkingService.findEscrowAddress(bonkingAddress)
-        const account = await getAccount(connection.connection, escrowAddress)
-        setAmount(account.amount.toString());
-        setMint(account.mint.toBase58())
-    }
+    }, [bonking, connection])
 
     return (
         <>

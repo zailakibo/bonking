@@ -15,7 +15,32 @@ type FindBonkArgs = BonkArgs & {
     number: number
 }
 
+type FindAllBonksByOwnerArgs = {
+    connection: Connection,
+    wallet: any,
+}
+
+type CloseBonkArgs = {
+    connection: Connection,
+    wallet: any,
+    bonkAddress: PublicKey,
+}
+
 export class BonkService {
+
+    static closeBonk({ connection, wallet, bonkAddress }: CloseBonkArgs) {
+        const program = ProgramService.getProgram(connection, wallet);
+        return program.methods.closeBonk()
+            .accounts({
+                bonk: bonkAddress,
+            })
+            .rpc();
+    }
+
+    static findAllBonksByOwner({ connection, wallet }: FindAllBonksByOwnerArgs) {
+        const program = ProgramService.getProgram(connection, wallet);
+        return program.account.bonk.all();
+    }
 
     static async findBonkByBonkingAddressAndNumber({ connection, wallet, bonkingAddress, number }: FindBonkArgs) {
         const program = ProgramService.getProgram(connection, wallet);

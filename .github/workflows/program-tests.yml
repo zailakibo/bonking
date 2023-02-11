@@ -27,6 +27,8 @@ jobs:
             - name: Install Anchor
               run: npm i @coral-xyz/anchor-cli -g
             - name: Run tests
+              env:
+                BONKING_KEY: ${{ secrets.BONKING_KEY }}
               run: |
                 export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
                 cd ${{ github.workspace }}

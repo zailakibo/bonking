@@ -15,8 +15,14 @@ jobs:
             - uses: actions-rs/toolchain@v1
               with:
                 toolchain: nightly
+            - name: Install Solana
+            - run: |
+                sh -c "$(curl -sSfL https://release.solana.com/v1.15.1/install)"
+                export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+            - name: Install Anchor
+            - run: npm i @coral-xyz/anchor-cli -g
+            - name: Run tests
             - run: |
                 cd ${{ github.workspace }}
-                sh -c "$(curl -sSfL https://release.solana.com/v1.15.1/install)"
-                npm i @coral-xyz/anchor-cli -g
+                export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
                 anchor test

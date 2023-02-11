@@ -26,14 +26,18 @@ jobs:
                 solana-keygen new --no-bip39-passphrase
             - name: Install Anchor
               run: npm i @coral-xyz/anchor-cli -g
+            - name: Build
+              run: |
+                export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+                cd ${{ github.workspace }}
+                yarn
+                anchor build
             - name: Run tests
               env:
                 BONKING_KEY: ${{ secrets.BONKING_KEY }}
               run: |
                 export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
                 cd ${{ github.workspace }}
-                yarn
-                anchor build
                 echo "Fix the program public key"
                 echo $BONKING_KEY > ./target/deploy/bonking-keypair.json
                 ls -la ./target/deploy/bonking-keypair.json

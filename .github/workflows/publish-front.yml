@@ -19,6 +19,7 @@ jobs:
       - name: Build Frontend
         run: |
           ls ${{ github.workspace }}
+          anchor test
           cd ./app
           npm ci
           rm -rf ./build

@@ -5,6 +5,18 @@ use anchor_spl::{
 };
 use std::mem::size_of;
 
+#[error_code]
+pub enum BonkErrors {
+    #[msg("Wrong status")]
+    WrongStatus,
+
+    #[msg("Wrong method, use payed_bonk")]
+    WrongMethodUsePayedBonk,
+
+    #[msg("Still alive")]
+    BonkIsAlive,
+}
+
 declare_id!("Gx2UZFaDLEw3XQZdrdrTEEGfEBP9itEHuE4xpdGFJDUJ");
 
 /// b"bonking" hash
@@ -61,12 +73,11 @@ pub mod bonking {
     }
 
     pub fn bonk(ctx: Context<BonkMe>) -> Result<()> {
-        if ctx.accounts.bonking.status != 1 {
-            panic!("Wrong status");
-        }
-        if ctx.accounts.bonking.amount != 0 {
-            panic!("Wrong method, use payed_bonk");
-        }
+        require!(ctx.accounts.bonking.status == 1, BonkErrors::WrongStatus);
+        require!(
+            ctx.accounts.bonking.amount == 0,
+            BonkErrors::WrongMethodUsePayedBonk
+        );
         ctx.accounts.bonk.owner = ctx.accounts.payer.key();
         ctx.accounts.bonk.num = ctx.accounts.bonking.count;
         ctx.accounts.bonk.announcement_timeout = ctx.accounts.bonking.announcement_timeout;
@@ -83,9 +94,7 @@ pub mod bonking {
     }
 
     pub fn payed_bonk(ctx: Context<PayedBonk>) -> Result<()> {
-        if ctx.accounts.bonking.status != 1 {
-            panic!("Wrong status");
-        }
+        require!(ctx.accounts.bonking.status == 1, BonkErrors::WrongStatus);
         ctx.accounts.bonk.owner = ctx.accounts.payer.key();
         ctx.accounts.bonk.num = ctx.accounts.bonking.count;
         let mut source = ctx.accounts.bonking.hash2.to_vec();
@@ -116,9 +125,10 @@ pub mod bonking {
 
     pub fn finalize(ctx: Context<Finalize>, hash1_source: String) -> Result<()> {
         let clock = Clock::get()?;
-        if clock.unix_timestamp < ctx.accounts.bonking.timeout {
-            panic!("Still alive");
-        }
+        require!(
+            clock.unix_timestamp > ctx.accounts.bonking.timeout,
+            BonkErrors::BonkIsAlive
+        );
         let res = anchor_lang::solana_program::keccak::hash(&hash1_source.as_bytes());
         if res.to_bytes() != ctx.accounts.bonking.hash1 {
             msg!("hash = {:?}", res.to_bytes());
@@ -149,20 +159,22 @@ pub mod bonking {
     pub fn finalize_by_timeout(ctx: Context<Finalize>) -> Result<()> {
         let clock = Clock::get()?;
         let tolerance = 15 * 60;
-        if clock.unix_timestamp > ctx.accounts.bonking.timeout + tolerance {
-            let most_recent = arrayref::array_ref![ctx.accounts.bonking.hash2, 12, 4];
-            let number = u32::from_le_bytes(*most_recent);
-            if ctx.accounts.bonking.count == 0 {
-                // when there is no bonkers we skip to the end
-                ctx.accounts.bonking.status = 3;
-            } else {
-                let index = number % ctx.accounts.bonking.count;
-                ctx.accounts.bonking.winner = index;
-                ctx.accounts.bonking.status = 2;
-            }
+        require!(
+            clock.unix_timestamp > ctx.accounts.bonking.timeout + tolerance,
+            BonkErrors::BonkIsAlive
+        );
+
+        let most_recent = arrayref::array_ref![ctx.accounts.bonking.hash2, 12, 4];
+        let number = u32::from_le_bytes(*most_recent);
+        if ctx.accounts.bonking.count == 0 {
+            // when there is no bonkers we skip to the end
+            ctx.accounts.bonking.status = 3;
         } else {
-            panic!("Wait for a while");
+            let index = number % ctx.accounts.bonking.count;
+            ctx.accounts.bonking.winner = index;
+            ctx.accounts.bonking.status = 2;
         }
+
         Ok(())
     }
 
@@ -244,7 +256,11 @@ pub mod bonking {
         Ok(())
     }
 
-    pub fn close_bonk(_ctx: Context<CloseBonk>) -> Result<()> {
+    pub fn close_bonk(ctx: Context<CloseBonk>) -> Result<()> {
+        let clock = Clock::get()?;
+        if clock.unix_timestamp < ctx.accounts.bonk.announcement_timeout {
+            panic!("Still alive");
+        }
         Ok(())
     }
 }

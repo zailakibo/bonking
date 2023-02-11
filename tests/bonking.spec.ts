@@ -427,6 +427,39 @@ describe("bonking", () => {
             to: payerAccount.address,
         }).rpc()
     });
+
+    it("should protect bonking from close before the timeout", async () => {
+        const hashSource = "hash source x";
+        const hash1 = keccak_256(hashSource);
+        const bonkingAddress = BonkingService.findBonkingAddress("name")
+        const provider = program.provider as anchor.AnchorProvider;
+        const wallet = provider.wallet as NodeWallet;
+        const mint = await createMint(connection, wallet.payer, provider.publicKey, provider.publicKey, 9);
+
+        const payWithMint = await createMint(connection, wallet.payer, provider.publicKey, provider.publicKey, 9);
+
+        const [escrowWallet] = PublicKey.findProgramAddressSync(
+            [
+                Buffer.from(anchor.utils.bytes.utf8.encode("wallet")),
+                bonkingAddress.toBuffer(),
+            ],
+            program.programId
+        );
+
+        const bonkTimeout = new anchor.BN(Math.floor(Date.now() / 1000) + (14 * 60 * 60));
+        const tx = await program.methods.initialize(hash1 as any, bonkTimeout, "name", new anchor.BN(10), payWithMint, bonkTimeout)
+            .accounts({
+                bonking: bonkingAddress, escrowWallet, mint, prizeMint: mint,
+            }).rpc();
+        console.log("Your transaction signature", tx);
+        console.log('finalizing...')
+        const error = await program.methods.finalizeByTimeout()
+            .accounts({
+                bonking: bonkingAddress,
+            }).rpc()
+            .catch(e => e);
+        expect(error.message).to.contains('Still alive');
+    });
 });
 
 async function closeBonkNotWinner(program: Program<Bonking>, bonking: PublicKey, winner: number, number: number, payer: anchor.web3.Keypair) {

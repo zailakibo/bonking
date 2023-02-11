@@ -32,6 +32,7 @@ jobs:
                 cd ${{ github.workspace }}
                 yarn
                 yarn add ts-mocha
-                ls -la ~/.config/solana
                 anchor build
+                echo $BONKING_KEY > ./target/bonking-keypair.json
+                ls -la ./target/bonking-keypair.json
                 anchor test

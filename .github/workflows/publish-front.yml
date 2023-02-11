@@ -1,11 +1,13 @@
 name: GitHub Actions
-run-name: ${{ github.actor }} is running GitHub Actions 🚀
+run-name: ${{ github.actor }} is deploying the frontend 🚀
 on:
   push:
     branches:
       - main
+    paths:
+      - 'app/**'
 jobs:
-  Explore-GitHub-Actions:
+  Deploy-Frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -19,7 +21,6 @@ jobs:
       - name: Build Frontend
         run: |
           ls ${{ github.workspace }}
-          anchor test
           cd ./app
           npm ci
           rm -rf ./build

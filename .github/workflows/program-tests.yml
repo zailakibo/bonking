@@ -1,0 +1,22 @@
+# yaml-language-server: =https://json.schemastore.org/github-workflow.json
+---
+name: "Program Tests"
+on:
+    push:
+        paths:
+            - 'tests/**'
+            - 'programs/**'
+jobs:
+    just-test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions-rs/toolchain@v1
+              with:
+                toolchain: nightly
+            - run: |
+                cd ${{ github.workspace }}
+                cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+                avm install latest
+                avm use latest
+                anchor test

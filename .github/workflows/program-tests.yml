@@ -29,5 +29,6 @@ jobs:
             - name: Run tests
               run: |
                 cd ${{ github.workspace }}
+                ls -la ~/.config/solana
                 export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
                 anchor test

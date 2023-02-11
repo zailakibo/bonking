@@ -23,6 +23,7 @@ jobs:
                 SOLANA_KEY: ${{ secrets.SOLANA_KEY }}
               run: |
                 echo $SOLANA_KEY > ~/.config/solana/id.json
+                ls -la ~/.config/solana
             - name: Install Anchor
               run: npm i @coral-xyz/anchor-cli -g
             - name: Run tests

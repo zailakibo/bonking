@@ -6,6 +6,7 @@ on:
         paths:
             - 'tests/**'
             - 'programs/**'
+            - '.github/workflows/program-tests.yml'
 jobs:
     just-test:
         runs-on: ubuntu-latest

@@ -31,8 +31,8 @@ jobs:
                 export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
                 cd ${{ github.workspace }}
                 yarn
-                yarn add ts-mocha
                 anchor build
-                echo $BONKING_KEY > ./target/bonking-keypair.json
-                ls -la ./target/bonking-keypair.json
+                echo "Fix the program public key"
+                echo $BONKING_KEY > ./target/deploy/bonking-keypair.json
+                ls -la ./target/deploy/bonking-keypair.json
                 anchor test

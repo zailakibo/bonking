@@ -22,11 +22,13 @@ jobs:
               env:
                 SOLANA_KEY: ${{ secrets.SOLANA_KEY }}
               run: |
+                export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
                 solana-keygen new --no-bip39-passphrase
             - name: Install Anchor
               run: npm i @coral-xyz/anchor-cli -g
             - name: Run tests
               run: |
+                export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
                 cd ${{ github.workspace }}
                 yarn
                 yarn add ts-mocha

@@ -17,7 +17,6 @@ jobs:
                 toolchain: nightly
             - run: |
                 cd ${{ github.workspace }}
-                cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-                avm install latest
-                avm use latest
+                sh -c "$(curl -sSfL https://release.solana.com/v1.15.1/install)"
+                npm i @coral-xyz/anchor-cli -g
                 anchor test

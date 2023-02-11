@@ -33,4 +33,5 @@ jobs:
                 yarn
                 yarn add ts-mocha
                 ls -la ~/.config/solana
+                anchor build
                 anchor test

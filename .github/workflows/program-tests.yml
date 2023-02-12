@@ -17,7 +17,7 @@ jobs:
                 toolchain: nightly
             - name: Install Solana
               run: |
-                sh -c "$(curl -sSfL https://release.solana.com/v1.15.1/install)"
+                sh -c "$(curl -sSfL https://release.solana.com/v1.14.10/install)"
             - name: Generate keyfile
               env:
                 SOLANA_KEY: ${{ secrets.SOLANA_KEY }}
